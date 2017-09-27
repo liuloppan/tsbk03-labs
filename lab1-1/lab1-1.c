@@ -47,7 +47,7 @@ void OnTimer(int value);
 mat4 projectionMatrix;
 mat4 viewMatrix;
 
-
+//
 GLfloat square[] = {
 							-1,-1,0,
 							-1,1, 0,

@@ -15,6 +15,7 @@
 SpritePtr gSpriteRoot = NULL;
 GLuint backgroundTexID = 0;
 long gWidth=800, gHeight=600;
+float kMaxDistance = 300.0f;
 
 // vertex array object
 unsigned int vertexArrayObjID;
@@ -190,3 +191,52 @@ void InitSpriteLight()
 	
 	printError("init arrays");
 }
+
+
+FPoint FPointSub(FPoint a, FPoint b) //a-b
+{
+	FPoint res;
+	res.h = a.h-b.h;
+	res.v = a.v-b.v;
+
+	return res;
+
+}
+FPoint FPointAdd(FPoint a, FPoint b) //a+b
+{
+	FPoint res;
+	res.h = a.h+b.h;
+	res.v = a.v+b.v;
+
+	return res;
+
+}
+FPoint FPointScalarDiv(FPoint a, float b) //a/b
+{
+	FPoint res;
+	res.h = a.h/b;
+	res.v = a.v/b;
+
+	return res;
+
+}
+
+FPoint FPointScalarMult(FPoint a, float b) //a*b
+{
+	FPoint res;
+	res.h = a.h*b;
+	res.v = a.v*b;
+
+	return res;
+
+}
+FPoint FPointSet(float a, float b) // p(a,b)
+{
+	FPoint p;
+	p.h = a;
+	p.v = b;
+	
+	return p;
+}
+
+

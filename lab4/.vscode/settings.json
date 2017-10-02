@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "spritelight.h": "c",
+        "gl.h": "c"
+    }
+}

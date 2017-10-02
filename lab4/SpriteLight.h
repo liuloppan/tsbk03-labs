@@ -16,7 +16,7 @@
 
 typedef struct FPoint
 {
-	GLfloat h, v;
+	GLfloat h, v; //vertical, horisontal
 } FPoint;
 
 typedef struct SpriteRec
@@ -25,15 +25,20 @@ typedef struct SpriteRec
 	TextureData *face;
 	FPoint speed;
 	GLfloat rotation;
-	struct SpriteRec *next;
+	struct SpriteRec *next; //pointer to next sprite
 	
 	// Add custom sprite data here as needed
+	FPoint avoidance;
+	FPoint cohesion;
+	FPoint alignment;
+	
 } SpriteRec, *SpritePtr;
 
 // Globals: The sprite list, background texture and viewport dimensions (virtual or real pixels)
 extern SpritePtr gSpriteRoot;
 extern GLuint backgroundTexID;
 extern long gWidth, gHeight;
+extern float kMaxDistance; //distance/radius of when boids affect each other
 
 // Functions
 TextureData *GetFace(char *fileName);
@@ -43,3 +48,10 @@ void DrawSprite(SpritePtr sp);
 void DrawBackground();
 
 void InitSpriteLight();
+FPoint FPointSub(FPoint a, FPoint b);
+FPoint FPointAdd(FPoint a, FPoint b);//a+b
+FPoint FPointScalarDiv(FPoint a, float b);
+FPoint FPointScalarMult(FPoint a, float b);
+FPoint FPointSet(float a, float b);
+
+

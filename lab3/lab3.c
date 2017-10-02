@@ -184,9 +184,59 @@ void updateWorld()
 
 	// Detect collisions, calculate speed differences, apply forces
 	for (i = 0; i < kNumBalls; i++)
-        for (j = i+1; j < kNumBalls; j++)
+        for (j = i+1; j < kNumBalls; j++) //compares with all other balls
         {
+            float dist = sqrt(pow((ball[i].X.x -  ball[j].X.x),2) + pow((ball[i].X.z -  ball[j].X.z),2));
             // YOUR CODE HERE
+            if( dist < (2*kBallSize)) //check if balls are close enough for collision, then handle collision
+            {
+                //printf("hit");
+
+                vec3 nA = Normalize(SetVector(ball[i].v.x,ball[i].v.y, ball[i].v.z)); //normal, point of impact on ball[i]
+                vec3 nB = Normalize(SetVector(ball[j].v.x, ball[j].v.y, ball[j].v.z)); //normal, point of impact on ball[j]
+                
+                vec3 rA = ScalarMult(nA, kBallSize);
+                vec3 rB = ScalarMult(nB, kBallSize);
+                
+                //necessary?
+                //since we are using spheres, the relative velocity at collision point is the same as the balls velocity
+
+                //vec3 vpA = VectorAdd(ball[i].v, CrossProduct(ball[i].omega,rA));//v -A + ω -A × r A
+                //vec3 vpB = VectorAdd(ball[j].v, CrossProduct(ball[j].omega,rB));
+                               
+                // float vARel = DotProduct(VectorSub(vpA,vpB),nA);//the relative velocity previously collision, (v pA - v pB ) • n
+                // float vBRel = DotProduct(VectorSub(vpB,vpA),nB);
+                float vARel = DotProduct(VectorSub(ball[i].v, ball[j].v),nA);
+                float vBRel = DotProduct(VectorSub(ball[j].v, ball[i].v),nB);
+
+                float resCoeff = 1.0f; //coefficient of restitution ε in elastic collision
+                float jDenom = 1.0f/ball[i].mass + 1.0f/ball[j].mass; //denominator for j, easy now since rxn = 0 for spheres
+                
+                float jA = (-(resCoeff + 1.0f)*vARel)/jDenom;
+                float jB =  (-(resCoeff + 1.0f)*vBRel)/jDenom;
+
+                vec3 impA = ScalarMult(nA, jA);
+                vec3 impB = ScalarMult(nB, jB);
+
+               // ball[i].F = impA;//VectorAdd(ball[i].F,impA);
+               // ball[j].F = impB;//VectorAdd(ball[j].F,impB);
+                
+               //∆v = Imp/M
+               // ball[i].v = VectorAdd(ScalarMult(impA,1/ball[i].mass),ball[i].v);
+               // ball[j].v = VectorAdd(ScalarMult(impB,1/ball[j].mass),ball[j].v);
+                
+                ball[i].P = impA;// VectorAdd(impA,ball[i].P);
+                ball[j].P = impB;//VectorAdd(impB,ball[j].P);
+                //τ impulse = r × Imp
+
+                //ball[i].T = CrossProduct(rA, impA);
+                //ball[j].T = CrossProduct(rB, impB);
+                
+                
+                
+            }
+            
+
         }
 
 	// Control rotation here to reflect

@@ -31,18 +31,21 @@ typedef struct SpriteRec
 	FPoint avoidance;
 	FPoint cohesion;
 	FPoint alignment;
+
+	int typeID;
 	
 } SpriteRec, *SpritePtr;
 
 // Globals: The sprite list, background texture and viewport dimensions (virtual or real pixels)
 extern SpritePtr gSpriteRoot;
+extern SpritePtr dogSpritePtr;
 extern GLuint backgroundTexID;
 extern long gWidth, gHeight;
 extern float kMaxDistance; //distance/radius of when boids affect each other
 
 // Functions
 TextureData *GetFace(char *fileName);
-struct SpriteRec *NewSprite(TextureData *f, GLfloat h, GLfloat v, GLfloat hs, GLfloat vs);
+struct SpriteRec *NewSprite(int id, TextureData *f, GLfloat h, GLfloat v, GLfloat hs, GLfloat vs);
 void HandleSprite(SpritePtr sp);
 void DrawSprite(SpritePtr sp);
 void DrawBackground();

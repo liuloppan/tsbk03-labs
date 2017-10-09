@@ -13,9 +13,10 @@
 
 // Globals: The sprite list, background texture and viewport dimensions (virtual or real pixels)
 SpritePtr gSpriteRoot = NULL;
+SpritePtr dogSpritePtr = NULL;
 GLuint backgroundTexID = 0;
 long gWidth=800, gHeight=600;
-float kMaxDistance = 300.0f;
+float kMaxDistance = 200.0f;
 
 // vertex array object
 unsigned int vertexArrayObjID;
@@ -43,9 +44,9 @@ TextureData *GetFace(char *fileName)
 	return fp;
 }
 
-struct SpriteRec *NewSprite(TextureData *f, GLfloat h, GLfloat v, GLfloat hs, GLfloat vs)
+struct SpriteRec *NewSprite(int id, TextureData *f, GLfloat h, GLfloat v, GLfloat hs, GLfloat vs)
 {
-	SpritePtr sp;
+	SpritePtr sp;		
 	
 	sp = (SpriteRec *)malloc(sizeof(SpriteRec));
 	
@@ -58,6 +59,8 @@ struct SpriteRec *NewSprite(TextureData *f, GLfloat h, GLfloat v, GLfloat hs, GL
 	sp->speed.v = vs;
 	sp->face = f;
 	sp->rotation = 0;
+	sp->typeID = id;
+
 	return sp;
 }
 

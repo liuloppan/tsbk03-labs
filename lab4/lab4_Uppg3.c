@@ -22,9 +22,6 @@
 
 // L�gg till egna globaler h�r efter behov.
 float alignWeight = 0.005f, cohesionWeight=0.0005f, avoidWeight = 0.05f; //0.004. 0.0005
-const float dogStepSize = 30.0f;
-const int DOG_ID = 2;
-const int BLACKSHEEP_ID = 1;
 
 
 void SpriteBehavior() // Din kod!
@@ -41,19 +38,12 @@ void SpriteBehavior() // Din kod!
 	FPoint speedDiffSum,posAvg,avoidanceVec; 
 	
 
-	while(currSp ) //while there are sprites that aren't dogs
+	while(currSp) //while there are sprites
 	{
-		if(currSp->typeID == DOG_ID) //if it's a dog
-			{
-				dogSpritePtr = currSp;
-				currSp = currSp->next; 
-				
-				continue;							
-			}
-		
+
 		int spriteCounter = 0;
 		//set all to 0,0
-		speedDiffSum = FPointSet(0.0f,0.0f); //summated difference in speed
+		speedDiffSum = FPointSet(0.0f,0.0f); //summated differnce in speed
 		posAvg =  FPointSet(0.0f,0.0f); //average pos
 		avoidanceVec =  FPointSet(0.0f,0.0f); //avoidance
 
@@ -67,7 +57,6 @@ void SpriteBehavior() // Din kod!
 				compSp = compSp->next;
 				continue;				
 			}
-
 			
 			//get the distance between current sprites
 			FPoint posDiff = FPointSub(compSp->position, currSp->position);
@@ -75,37 +64,21 @@ void SpriteBehavior() // Din kod!
 			
 			if(dist <= kMaxDistance) //if boids are close enough to affect each other
 			{ 
-				if(compSp->typeID == DOG_ID) // if other boid is a dog, add avooidance
-				{
-					avoidanceVec = FPointAdd(FPointScalarDiv(FPointSub(currSp->position,compSp->position), 0.1*dist), avoidanceVec);
-					
-				}
-				else{
-					//handle cohesion aka get together				
-					posAvg = FPointAdd(posAvg, posDiff);
+				//handle cohesion aka get together				
+				posAvg = FPointAdd(posAvg, posDiff);
 
-					//apply alignment aka speed
-					speedDiffSum = FPointAdd(speedDiffSum, FPointSub(compSp->speed,currSp->speed));					
-					
-					if(currSp->typeID == BLACKSHEEP_ID) //if it's a black sheep
-					{
-						//between 0.5 and 1
-						float noiseFactor = 0.5 + (float) (rand() % 50) / 100.0 ; // random() returns number between 1 and 0
-						
-						speedDiffSum = FPointScalarMult(speedDiffSum, noiseFactor); //doesn't align as well
-					}
-					
-					//avoidance aka keep distance
-					if(dist <= (kMaxDistance/2.0f))
-					{
-						//use the normalized difference vec
-						avoidanceVec = FPointAdd(FPointScalarDiv(FPointSub(currSp->position,compSp->position), dist), avoidanceVec);
-						
-					}
-				}
+				//apply alignment aka speed
+				speedDiffSum = FPointAdd(speedDiffSum, FPointSub(compSp->speed,currSp->speed));
 
 				spriteCounter++;
 				
+				//avoidance aka keep distance
+				if(dist <= (kMaxDistance/2.0f))
+				{
+					//use the normalized difference vec
+					avoidanceVec = FPointAdd(FPointScalarDiv(FPointSub(currSp->position,compSp->position), dist), avoidanceVec);
+					
+				}
 			}
 			compSp = compSp->next;
 			
@@ -128,7 +101,6 @@ void SpriteBehavior() // Din kod!
 	currSp = gSpriteRoot;
 	while(currSp)
 	{
-		
 		FPoint alignTot, cohesionTot, avoidanceTot;
 
 		alignTot = FPointScalarMult(currSp->alignment,alignWeight);
@@ -137,27 +109,10 @@ void SpriteBehavior() // Din kod!
 		
 		//update speed
 		currSp->speed = FPointAdd(avoidanceTot,FPointAdd(cohesionTot,FPointAdd(currSp->speed,alignTot)));
-		
-		//stabilize the white sheep, keep black sheep moving with noise
-		if(currSp->typeID == BLACKSHEEP_ID && currSp->speed.h<0.01f && currSp->speed.v<0.01f)
-		{
-			//currSp->speed = FPointScalarMult(currSp->speed,1.0005);
-			float noiseV = -1.0 + (float) (rand() % 100)/50 ; // random() returns number between 1 and 0
-			float noiseH = -1.0 + (float) (rand() % 100)/50 ;
-			//currSp->position = FPointAdd(currSp->position, FPointSet(noiseH,noiseV));
-			currSp->speed = FPointAdd(currSp->speed, FPointSet(noiseH,noiseV));
-			
-		}
-		else
-			currSp->speed = FPointScalarMult(currSp->speed,0.99f);
-
-
-		if(currSp->typeID == DOG_ID)
-		currSp->speed = FPointSet(0.0f,0.0f); // dog should not move on its own
-
-
-		currSp = currSp->next;	
-		
+		//stabilize
+		currSp->speed = FPointScalarMult(currSp->speed,1.0005);
+				
+		currSp = currSp->next;
 	}
 
 }
@@ -166,8 +121,6 @@ void SpriteBehavior() // Din kod!
 void Display()
 {
 	SpritePtr sp;
-	//SpritePtr dogSp = dogSpritePtr;
-	
 	
 	glClearColor(0, 0, 0.2, 1);
 	glClear(GL_COLOR_BUFFER_BIT+GL_DEPTH_BUFFER_BIT);
@@ -220,26 +173,7 @@ void Key(unsigned char key,
     case '-':
 		avoidWeight -= 0.005;
     	printf("avoidWeight = %f\n", avoidWeight);
-		break;
-	case 'w':
-		dogSpritePtr->position.v +=dogStepSize;
-		//dogSpritePtr->rotation += 45.0f;		
-		break;		
-		
-	case 'a':
-		dogSpritePtr->position.h -= dogStepSize;
-		dogSpritePtr->rotation += 90.0f;
-		
-		break;
-		
-	case 's':
-		dogSpritePtr->position.v -= dogStepSize;
-		break;
-		
-	case 'd':
-		dogSpritePtr->position.h += dogStepSize;
-		break;
-
+    	break;
     case 0x1b:
       exit(0);
   }
@@ -256,31 +190,19 @@ void Init()
 	blackFace = GetFace("bilder/blackie.tga"); // Ett svart f�r
 	dogFace = GetFace("bilder/dog.tga"); // En hund
 	foodFace = GetFace("bilder/mat.tga"); // Mat
-
-	int typeID;
-	typeID = 0; //white sheep
 	
-	NewSprite(typeID, sheepFace, 100, 200, 1, 1);
-	NewSprite(typeID,sheepFace, 200, 100, 1.5, -1);
-	NewSprite(typeID,sheepFace, 250, 200, -1, 1.5);
-	NewSprite(typeID,sheepFace, 200, 200, -1, 1.5);
-	NewSprite(typeID,sheepFace, 100, 100, -1, 1.5);
-	NewSprite(typeID,sheepFace, 50, 100, -1, 1.5);
-	NewSprite(typeID,sheepFace, 50, 50, -1, 1.5);
-	NewSprite(typeID,sheepFace, 200, 50, -1, 1.5);
-	NewSprite(typeID,sheepFace, 50, 200, -1, 1.5);
-	NewSprite(typeID,sheepFace, 50, 250, -1, 1.5);
-	NewSprite(typeID,sheepFace, 150, 50, -1, 1.5);
-	NewSprite(typeID,sheepFace, 300, 300, 1, 1);
-
-	typeID = BLACKSHEEP_ID; // black sheep
-
-	NewSprite(typeID,blackFace,50, 300, 1, 1);
-	NewSprite(typeID,blackFace, 150, 300, 1, 1);
-
-	typeID = DOG_ID; // dog
-	NewSprite(typeID,dogFace, 150, 150, 1, 1);
-	
+	NewSprite(sheepFace, 100, 200, 1, 1);
+	NewSprite(sheepFace, 200, 100, 1.5, -1);
+	NewSprite(sheepFace, 250, 200, -1, 1.5);
+	NewSprite(sheepFace, 200, 200, -1, 1.5);
+	NewSprite(sheepFace, 100, 100, -1, 1.5);
+	NewSprite(sheepFace, 50, 100, -1, 1.5);
+	NewSprite(sheepFace, 50, 50, -1, 1.5);
+	NewSprite(sheepFace, 200, 50, -1, 1.5);
+	NewSprite(sheepFace, 50, 200, -1, 1.5);
+	NewSprite(sheepFace, 50, 250, -1, 1.5);
+	NewSprite(sheepFace, 150, 50, -1, 1.5);
+	NewSprite(sheepFace, 300, 300, 1, 1);
 	
 }
 

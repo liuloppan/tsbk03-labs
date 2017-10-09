@@ -186,54 +186,47 @@ void updateWorld()
 	for (i = 0; i < kNumBalls; i++)
         for (j = i+1; j < kNumBalls; j++) //compares with all other balls
         {
+            // distance variable between the 2 balls, no dist in y-dir
             float dist = sqrt(pow((ball[i].X.x -  ball[j].X.x),2) + pow((ball[i].X.z -  ball[j].X.z),2));
+            
+            //if they are close enough, check if they move in similar direction
+            vec3 diffV = VectorSub(ball[i].v, ball[j].v);
+            vec3 diffDist = VectorSub(ball[i].X, ball[j].X);
+
+            //relative distance dot relative velocity to check the direction of movement
+            //if dotproduct < 0, angle is larger than 90 degrees = moving away from each other
+            //if dotproduct > 0, angle is smaller than 90 degrees = moving in same direction
+
+            float dirCheck = DotProduct(diffV, diffDist);
+                            
             // YOUR CODE HERE
-            if( dist < (2*kBallSize)) //check if balls are close enough for collision, then handle collision
-            {
-                //printf("hit");
-
-                vec3 nA = Normalize(SetVector(ball[i].v.x,ball[i].v.y, ball[i].v.z)); //normal, point of impact on ball[i]
-                vec3 nB = Normalize(SetVector(ball[j].v.x, ball[j].v.y, ball[j].v.z)); //normal, point of impact on ball[j]
-                
-                vec3 rA = ScalarMult(nA, kBallSize);
-                vec3 rB = ScalarMult(nB, kBallSize);
-                
-                //necessary?
-                //since we are using spheres, the relative velocity at collision point is the same as the balls velocity
-
-                //vec3 vpA = VectorAdd(ball[i].v, CrossProduct(ball[i].omega,rA));//v -A + ω -A × r A
-                //vec3 vpB = VectorAdd(ball[j].v, CrossProduct(ball[j].omega,rB));
+            if( dist <= (2.0*kBallSize) && dirCheck < 0.0) //check if balls are close enough for collision, then handle collision
+            {                            
+                /*in this particular case, since there are only spheres
+                  of equal mass and radius, we could also calculate 1 impulse
+                  and apply the reverse to the other ball.
+                */
+                //since we have spheres, we can just normalize the difference vector between their positions
+                vec3 n = Normalize(diffDist); //normal, point of impact on ball[i]
                                
-                // float vARel = DotProduct(VectorSub(vpA,vpB),nA);//the relative velocity previously collision, (v pA - v pB ) • n
-                // float vBRel = DotProduct(VectorSub(vpB,vpA),nB);
-                float vARel = DotProduct(VectorSub(ball[i].v, ball[j].v),nA);
-                float vBRel = DotProduct(VectorSub(ball[j].v, ball[i].v),nB);
+                //point of impact will be the normalized normal times the radius
+                vec3 r = ScalarMult(n, kBallSize); //same for both, but reverse, in this particular case
+                
+               // vec3 vpA = VectorAdd(ball[i].v, CrossProduct(ball[i].omega,r));//v -A + ω -A × r A
+               // vec3 vpB = VectorAdd(ball[j].v, CrossProduct(ball[j].omega,r));//v -A + ω -A × r A
 
-                float resCoeff = 1.0f; //coefficient of restitution ε in elastic collision
+                float vRel = DotProduct(diffV,n);//the relative velocity previously collision, (v pA - v pB ) • n
+
+                float resCoeff = 0.5f; //coefficient of restitution ε, 1.0 in elastic collision
                 float jDenom = 1.0f/ball[i].mass + 1.0f/ball[j].mass; //denominator for j, easy now since rxn = 0 for spheres
                 
-                float jA = (-(resCoeff + 1.0f)*vARel)/jDenom;
-                float jB =  (-(resCoeff + 1.0f)*vBRel)/jDenom;
+                float J = (-(resCoeff + 1.0f)*vRel)/jDenom;
 
-                vec3 impA = ScalarMult(nA, jA);
-                vec3 impB = ScalarMult(nB, jB);
-
-               // ball[i].F = impA;//VectorAdd(ball[i].F,impA);
-               // ball[j].F = impB;//VectorAdd(ball[j].F,impB);
-                
-               //∆v = Imp/M
-               // ball[i].v = VectorAdd(ScalarMult(impA,1/ball[i].mass),ball[i].v);
-               // ball[j].v = VectorAdd(ScalarMult(impB,1/ball[j].mass),ball[j].v);
-                
-                ball[i].P = impA;// VectorAdd(impA,ball[i].P);
-                ball[j].P = impB;//VectorAdd(impB,ball[j].P);
-                //τ impulse = r × Imp
-
-                //ball[i].T = CrossProduct(rA, impA);
-                //ball[j].T = CrossProduct(rB, impB);
-                
-                
-                
+                vec3 imp = ScalarMult(n, J);
+  
+               //add the force from the Impulse to the accumulated force on balls
+                ball[i].F = VectorAdd(ScalarMult(imp, 1.0f/deltaT), ball[i].F);
+                ball[j].F = VectorAdd(ScalarMult(imp, -1.0f/deltaT),ball[j].F);              
             }
             
 
@@ -250,7 +243,8 @@ void updateWorld()
         //ball[i].R = ArbRotate(ball[i].omega, vMag);
         
 
-	}
+    }
+    
 
 // Update state, follows the book closely
 	for (i = 0; i < kNumBalls; i++)
@@ -266,10 +260,13 @@ void updateWorld()
 
         ball[i].omega = ScalarMult(CrossProduct(ball[i].v, SetVector(0.0f, -1.0f, 0.0f)), 1/kBallSize); //calc correct orientation
         
-
+        //OBS! Moved P to here so its updated value is used to update velocity
+//		P := P + F * dT
+        dP = ScalarMult(ball[i].F, deltaT); // dP := F*dT
+        ball[i].P = VectorAdd(ball[i].P, dP); // P := P + dP
 //		v := P * 1/mass
 		ball[i].v = ScalarMult(ball[i].P, 1.0/(ball[i].mass));
-//		X := X + v*dT
+        //		X := X + v*dT
 		dX = ScalarMult(ball[i].v, deltaT); // dX := v*dT
 		ball[i].X = VectorAdd(ball[i].X, dX); // X := X + dX
 //		R := R + Rd*dT
@@ -277,9 +274,8 @@ void updateWorld()
 		Rd = CrossMatrix(dO); // Calc dO, add to R
 		Rd = Mult(Rd, ball[i].R); // Rotate the diff (NOTE: This was missing in early versions.)
 		ball[i].R = MatrixAdd(ball[i].R, Rd);
-//		P := P + F * dT
-		dP = ScalarMult(ball[i].F, deltaT); // dP := F*dT
-		ball[i].P = VectorAdd(ball[i].P, dP); // P := P + dP
+
+        //OBS! P used to be updated here, moved so the velocity is updated directly
 //		L := L + t * dT
 		dL = ScalarMult(ball[i].T, deltaT); // dL := T*dT
 		ball[i].L = VectorAdd(ball[i].L, dL); // L := L + dL
@@ -365,11 +361,15 @@ void init()
     // Initialize ball data, positions etc
 	for (i = 0; i < kNumBalls; i++)
 	{
-		ball[i].mass = 1.0;
+        printf("%i\n", i);
+
+        ball[i].mass = 1.0;     
 		ball[i].X = SetVector(0.0, 0.0, 0.0);
 		ball[i].P = SetVector(((float)(i % 13))/ 50.0, 0.0, ((float)(i % 15))/50.0);
-		ball[i].R = IdentityMatrix();
-	}
+        ball[i].R = IdentityMatrix();
+    }
+    //ball[0].mass = 2.0; //make 1st ball heavier
+
 	ball[0].X = SetVector(0, 0, 0);
 	ball[1].X = SetVector(0, 0, 0.5);
 	ball[2].X = SetVector(0.0, 0, 1.0);

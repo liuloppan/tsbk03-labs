@@ -4,7 +4,7 @@ in vec2 outTexCoord;
 uniform sampler2D texUnit;
 out vec4 out_Color;
 
-float stepSize = 1f/512;
+float stepSize = 1.0/512;
 
 
 void main(void)
@@ -20,7 +20,7 @@ void main(void)
 	// pixel 2
 	vec3 tex_pix2 = vec3(texture(texUnit, outTexCoord - vec2(0, stepSize)));
 	//...
- 	vec3 tex_pix3 = vec3(texture(texUnit, outTexCoord + vec2(stepSize,stepSize)));
+ 	vec3 tex_pix3 = vec3(texture(texUnit, outTexCoord + vec2(stepSize,-stepSize)));
 	vec3 tex_pix4 = vec3(texture(texUnit, outTexCoord - vec2(stepSize,0)));
 	vec3 tex_pix5 = vec3(texture(texUnit, outTexCoord)); 	// center pixel
 	vec3 tex_pix6 = vec3(texture(texUnit, outTexCoord + vec2(stepSize,0)));
@@ -30,7 +30,7 @@ void main(void)
 
 	// summera
 
-	vec3 tex_color = (tex_pix1 + tex_pix2 + tex_pix3 + tex_pix4+ tex_pix5 + tex_pix6 + tex_pix7 + tex_pix8 + tex_pix9)/9f;
+	vec3 tex_color = (tex_pix1 + tex_pix2 + tex_pix3 + tex_pix4 + tex_pix5 + tex_pix6 + tex_pix7 + tex_pix8 + tex_pix9)/9.0;
 
     out_Color = vec4(tex_color, 1.0);
 }

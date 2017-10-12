@@ -147,7 +147,6 @@ void init(void)
 	LoadTGATextureSimple("bumpmaps/uppochner.tga", &tex);
 	//LoadTGATextureSimple("bumpmaps/krafs.tga", &tex);
 	//LoadTGATextureSimple("bumpmaps/prickig.tga", &tex);
-	
 	//LoadTGATextureSimple("bumpmaps/kulle.tga", &tex);
 	
 	// load the model

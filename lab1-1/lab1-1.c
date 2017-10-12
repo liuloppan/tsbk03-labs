@@ -66,7 +66,7 @@ Model* squareModel;
 Point3D cam, point;
 Model *model1;
 FBOstruct *fbo1, *fbo2, *fbo3;
-GLuint phongshader = 0, plaintextureshader = 0, edgeshader = 0, lowpasshader = 0;
+GLuint phongshader = 0, plaintextureshader = 0, edgeshader = 0, lowpasshader = 0, texturecomboshader = 0;
 
 //-------------------------------------------------------------------------------------
 
@@ -86,6 +86,7 @@ void init(void)
 	phongshader = loadShaders("phong.vert", "phong.frag");  // renders with light (used for initial renderin of teapot)
 	edgeshader = loadShaders("edge.vert", "edge.frag");
 	lowpasshader = loadShaders("lowpass.vert", "lowpass.frag");
+	texturecomboshader = loadShaders("textureCombo.vert", "textureCombo.frag");
 
 	printError("init shader");
 
@@ -116,12 +117,9 @@ void OnTimer(int value)
 }
 
 void runfilter(GLuint shader, FBOstruct *in1, FBOstruct *in2, FBOstruct *out)
-
 {
 
-    glUseProgram(shader);
-
-    
+    glUseProgram(shader); 
 
     // Many of these things would be more efficiently done once and for all
 
@@ -181,9 +179,17 @@ void display(void)
 	DrawModel(model1, phongshader, "in_Position", "in_Normal", NULL);
 
 	// Done rendering the FBO! Set up for rendering on screen, using the result as texture!
-	runfilter(edgeshader, fbo1, 0L, fbo2); // (shader, in, in, ut)
-	runfilter(lowpasshader, fbo2, 0L, fbo3); // (shader, in, in, ut)
+	runfilter(edgeshader, fbo1, 0L, fbo2); // (shader, in, in, out)
+	
+	for(int i = 0; i< 20; i++)
+	{
+		//pingponging
+		runfilter(lowpasshader, fbo2, 0L, fbo2); // (shader, in, in, out)		
+	}
 
+	runfilter(texturecomboshader, fbo2, fbo1, fbo3); // (shader, in, in, out)
+	
+	
 //	glFlush(); // Can cause flickering on some systems. Can also be necessary to make drawing complete.
 	useFBO(0L, fbo3, 0L); //skriv till 0 -> skärmen, (ut, in, in)
 	glClearColor(0.0, 0.0, 0.0, 0);

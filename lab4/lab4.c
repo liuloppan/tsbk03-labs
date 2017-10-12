@@ -21,8 +21,8 @@
 #include "GL_utilities.h"
 
 // L�gg till egna globaler h�r efter behov.
-float alignWeight = 0.005f, cohesionWeight=0.0005f, avoidWeight = 0.05f; //0.004. 0.0005
-const float dogStepSize = 30.0f;
+float alignWeight = 0.05f, cohesionWeight=0.0005f, avoidWeight = 0.2f; //0.004. 0.0005
+const float dogStepSize = 15.0f;
 const int DOG_ID = 2;
 const int BLACKSHEEP_ID = 1;
 
@@ -63,7 +63,7 @@ void SpriteBehavior() // Din kod!
 		while(compSp)
 		{	
 			
-			if(currSp == compSp) {
+			if(currSp == compSp ) {
 				compSp = compSp->next;
 				continue;				
 			}
@@ -87,6 +87,7 @@ void SpriteBehavior() // Din kod!
 					//apply alignment aka speed
 					speedDiffSum = FPointAdd(speedDiffSum, FPointSub(compSp->speed,currSp->speed));					
 					
+					//FPointSub(compSp->speed, currSp->speed);//
 					if(currSp->typeID == BLACKSHEEP_ID) //if it's a black sheep
 					{
 						//between 0.5 and 1
@@ -96,11 +97,11 @@ void SpriteBehavior() // Din kod!
 					}
 					
 					//avoidance aka keep distance
-					if(dist <= (kMaxDistance/2.0f))
+					if(dist <= (kMaxDistance/4.0f))
 					{
 						//use the normalized difference vec
-						avoidanceVec = FPointAdd(FPointScalarDiv(FPointSub(currSp->position,compSp->position), dist), avoidanceVec);
-						
+						//avoidanceVec = FPointAdd(FPointScalarDiv(FPointSub(currSp->position,compSp->position), 4.0 * dist), avoidanceVec);
+						avoidanceVec = FPointSub(currSp->position,compSp->position);
 					}
 				}
 
@@ -138,8 +139,13 @@ void SpriteBehavior() // Din kod!
 		//update speed
 		currSp->speed = FPointAdd(avoidanceTot,FPointAdd(cohesionTot,FPointAdd(currSp->speed,alignTot)));
 		
-		//stabilize the white sheep, keep black sheep moving with noise
-		if(currSp->typeID == BLACKSHEEP_ID && currSp->speed.h<0.01f && currSp->speed.v<0.01f)
+		if(currSp->typeID == DOG_ID)
+		{
+			//currSp->speed = FPointSub(currSp->speed, FPointScalarDiv(currSp->speed, 5.0));
+			currSp->speed.v -= currSp->speed.v/5.0;
+			currSp->speed.h -= currSp->speed.h/5.0;	
+
+		}else if(currSp->typeID == BLACKSHEEP_ID && currSp->speed.h<0.01f && currSp->speed.v<0.01f)
 		{
 			//currSp->speed = FPointScalarMult(currSp->speed,1.0005);
 			float noiseV = -1.0 + (float) (rand() % 100)/50 ; // random() returns number between 1 and 0
@@ -148,12 +154,12 @@ void SpriteBehavior() // Din kod!
 			currSp->speed = FPointAdd(currSp->speed, FPointSet(noiseH,noiseV));
 			
 		}
-		else
+		else{
+			//white sheep and moving black sheep
+			currSp->speed = FPointAdd(currSp->speed, alignTot);
 			currSp->speed = FPointScalarMult(currSp->speed,0.99f);
-
-
-		if(currSp->typeID == DOG_ID)
-		currSp->speed = FPointSet(0.0f,0.0f); // dog should not move on its own
+			
+		}
 
 
 		currSp = currSp->next;	
@@ -222,22 +228,20 @@ void Key(unsigned char key,
     	printf("avoidWeight = %f\n", avoidWeight);
 		break;
 	case 'w':
-		dogSpritePtr->position.v +=dogStepSize;
-		//dogSpritePtr->rotation += 45.0f;		
+		dogSpritePtr->speed.v +=dogStepSize;		
 		break;		
 		
 	case 'a':
-		dogSpritePtr->position.h -= dogStepSize;
-		dogSpritePtr->rotation += 90.0f;
+		dogSpritePtr->speed.h -= dogStepSize;
 		
 		break;
 		
 	case 's':
-		dogSpritePtr->position.v -= dogStepSize;
+		dogSpritePtr->speed.v -= dogStepSize;
 		break;
 		
 	case 'd':
-		dogSpritePtr->position.h += dogStepSize;
+		dogSpritePtr->speed.h += dogStepSize;
 		break;
 
     case 0x1b:

@@ -23,24 +23,15 @@ void main(void)
 	float gradT = (texture(texUnit, outTexCoord+vec2(0.0, offset))-texture(texUnit, outTexCoord)).t * 10.0;
 
 	vec2 gradient = vec2(gradS, gradT);
-	
-	vec3 normal = normalize(vec3(-gradient, 1.0));
-
 
 	//we want to use the bumpmap to affect the normal
-    //vec3 normal = normalize(out_Normal + vec3(gradient, 1.0));
-	//vec3 PS = normalize(Ps);
-	//vec3 PT = normalize(Pt);
-	vec3 n = normalize(out_Normal); //in normal
+    vec3 normal = normalize(out_Normal+vec3(gradient, 1.0));
 
-	mat3 mvt = transpose(mat3(Ps,Pt,n));
 
 	//------------light calculations-----------//
     vec3 light = vec3(0.0, 0.7, 0.7); // Light source in view coordinates
-	
-	light =   mvt * light ;
 
-	// float diffuse, specular, shade;
+	// float diffuse, specular , shade;
 
 	// // Diffuse
 	// diffuse = dot(normal, light);
@@ -48,11 +39,8 @@ void main(void)
 	
 	// // Specular
 	// vec3 r = reflect(-light, normalize(normal)); //	reverse, vec3 r = reflect(light, normalize(-normal));
-	// //r = normalize(mvt * r;
 
 	// vec3 v = normalize(camPos-pixPos); // View direction, reverse from here too
-	// v =  mvt * v;
-	
 	// specular = dot(r, v);
 	// if (specular > 0.0)
 	// 	specular = 1.0 * pow(specular, 50.0);
@@ -64,9 +52,8 @@ void main(void)
 
 	// Simplified lighting calculation.
 	// A full solution would include material, ambient, specular, light sources, multiply by texture.
-    out_Color = vec4( dot(normal, light)); //* texture(texUnit, outTexCoord);
-   // out_Color = vec4(shade,shade,shade, 1.0 );
-    //out_Color = vec4( dot(normal, light)) ; //* texture(texUnit, outTexCoord);
-	//out_Color = vec4(normal, 1.0);
-	
+    out_Color = vec4( dot(normal, light)) ;//* texture(texUnit, outTexCoord);
+    //out_Color = vec4(shade, shade, shade, 1.0 );
+	    //out_Color = vec4(normal, 1.0 );
+
 }

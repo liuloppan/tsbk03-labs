@@ -71,6 +71,7 @@ typedef struct
 {
   GLuint tex;
   GLfloat mass;
+  GLfloat pointMass; 
 
   vec3 X, P, L; // position, linear momentum, angular momentum
   mat4 R; // Rotation
@@ -80,6 +81,7 @@ typedef struct
 //  mat4 J, Ji; We could have these but we can live without them for spheres.
   vec3 omega; // Angular velocity
   vec3 v; // Change in velocity
+
 
 } Ball;
 
@@ -103,7 +105,7 @@ Material ballMt = { { 1.0, 1.0, 1.0, 1.0 }, { 1.0, 1.0, 1.0, 0.0 },
                 };
 
 
-enum {kNumBalls = 4}; // Change as desired, max 16
+enum {kNumBalls = 16}; // Change as desired, max 16
 
 //------------------------------Globals---------------------------------
 ModelTexturePair tableAndLegs, tableSurf;
@@ -210,14 +212,14 @@ void updateWorld()
                 vec3 n = Normalize(diffDist); //normal, point of impact on ball[i]
                                
                 //point of impact will be the normalized normal times the radius
-                vec3 r = ScalarMult(n, kBallSize); //same for both, but reverse, in this particular case
+               // vec3 r = ScalarMult(n, kBallSize); //same for both, but reverse, in this particular case
                 
                // vec3 vpA = VectorAdd(ball[i].v, CrossProduct(ball[i].omega,r));//v -A + ω -A × r A
                // vec3 vpB = VectorAdd(ball[j].v, CrossProduct(ball[j].omega,r));//v -A + ω -A × r A
 
                 float vRel = DotProduct(diffV,n);//the relative velocity previously collision, (v pA - v pB ) • n
 
-                float resCoeff = 0.5f; //coefficient of restitution ε, 1.0 in elastic collision
+                float resCoeff = 1.0f; //coefficient of restitution ε, 1.0 in elastic collision
                 float jDenom = 1.0f/ball[i].mass + 1.0f/ball[j].mass; //denominator for j, easy now since rxn = 0 for spheres
                 
                 float J = (-(resCoeff + 1.0f)*vRel)/jDenom;
@@ -226,7 +228,10 @@ void updateWorld()
   
                //add the force from the Impulse to the accumulated force on balls
                 ball[i].F = VectorAdd(ScalarMult(imp, 1.0f/deltaT), ball[i].F);
-                ball[j].F = VectorAdd(ScalarMult(imp, -1.0f/deltaT),ball[j].F);              
+                ball[j].F = VectorAdd(ScalarMult(imp, -1.0f/deltaT),ball[j].F);    
+                
+                //---------------------------------------------//
+
             }
             
 
@@ -237,11 +242,21 @@ void updateWorld()
 	for (i = 0; i < kNumBalls; i++)
 	{
         // YOUR CODE HERE
-        //axis to rotate around should be crossproduct of velocity dir and gravity vec
-       
-        // float vMag = 5* sqrt(pow(ball[i].v.x, 2) + pow(ball[i].v.y, 2) + pow(ball[i].v.z, 2));//velocity x dir
-        //ball[i].R = ArbRotate(ball[i].omega, vMag);
-        
+                        //TASK 3
+
+        //calc the speeds affecting the rotation, angular vel and vel
+        //relative velocity compared to floor
+        vec3 r = SetVector(0.0f, -kBallSize, 0.0f); // down vec toward floor
+        vec3 vRelFloor = CrossProduct(ball[i].omega, r);
+        vec3 vRel = VectorAdd(ball[i].v, vRelFloor);
+
+        //Friction force
+        float friction = -0.1f;
+        vec3 F = ScalarMult(vRel, friction); 
+
+        //add the force and torque
+        ball[i].T = CrossProduct(r, F); // T = r x F
+        ball[i].F = VectorAdd(ball[i].F, F);
 
     }
     
@@ -250,16 +265,23 @@ void updateWorld()
 	for (i = 0; i < kNumBalls; i++)
 	{
 		vec3 dX, dP, dL, dO;
-		mat4 Rd;
-
-		// Note: omega is not set. How do you calculate it?
+        mat4 Rd;
+        
+        // Note: omega is not set. How do you calculate it?
         // YOUR CODE HERE Uppgift 1
         //omega, angular velocity, can be seen as the axis which the ball rotates around
         //Use Crossproduct to get ang velocity dir
         //v = omega * r, calc magnitude or ang velocity with ScalarMult and radius
 
-        ball[i].omega = ScalarMult(CrossProduct(ball[i].v, SetVector(0.0f, -1.0f, 0.0f)), 1/kBallSize); //calc correct orientation
-        
+        //TASK 1, "cheating" rotation
+       // ball[i].omega = ScalarMult(CrossProduct(ball[i].v, SetVector(0.0f, -1.0f, 0.0f)), 1/kBallSize); //calc correct orientation
+
+        //TASK 3, with friction and inertia matrix
+        //J^-1 = 3/(Mr^2), m = ball[i].mass/12
+        float J_inverse = 3.0f/ (ball[i].mass/12.0f * kBallSize * kBallSize);
+        ball[i].omega =  ScalarMult(ball[i].L,J_inverse);
+
+
         //OBS! Moved P to here so its updated value is used to update velocity
 //		P := P + F * dT
         dP = ScalarMult(ball[i].F, deltaT); // dP := F*dT
